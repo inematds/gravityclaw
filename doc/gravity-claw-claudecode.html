@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gravity Claw × Claude Code — Feature Store</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg:        #0c0900;
+      --surface:   #191200;
+      --surface-2: #211800;
+      --surface-3: #2a1f00;
+      --border:    #3d2e00;
+      --text:      #f5ead5;
+      --text-muted:#b89a60;
+      --text-dim:  #5c4820;
+      --accent:    #f59e0b;
+      --accent-2:  #fcd34d;
+      --accent-3:  #fb923c;
+      --green:     #34d399;
+      --red:       #f87171;
+      --cyan:      #67e8f9;
+      --purple:    #a78bfa;
+      --radius:    14px;
+      --radius-sm: 8px;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family:'Outfit',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; overflow-x:hidden; }
+
+    body::before {
+      content:''; position:fixed; inset:0; pointer-events:none; z-index:0;
+      background: radial-gradient(ellipse at 20% 25%, rgba(245,158,11,.07) 0%, transparent 55%),
+                  radial-gradient(ellipse at 80% 75%, rgba(251,146,60,.05) 0%, transparent 55%),
+                  radial-gradient(ellipse at 50% 5%,  rgba(252,211,77,.04) 0%, transparent 50%);
+      animation: bgDrift 20s ease-in-out infinite alternate;
+    }
+    @keyframes bgDrift { to { transform:translate(-1.5%,-2%); } }
+
+    .grid-bg {
+      position:fixed; inset:0; pointer-events:none; z-index:0;
+      background-image: linear-gradient(rgba(245,158,11,.02) 1px, transparent 1px),
+                        linear-gradient(90deg, rgba(245,158,11,.02) 1px, transparent 1px);
+      background-size:56px 56px;
+    }
+
+    .container { max-width:1280px; margin:0 auto; padding:0 28px; position:relative; z-index:1; }
+
+    /* ── Header ── */
+    header {
+      padding:24px 0; border-bottom:1px solid var(--border);
+      position:sticky; top:0; background:rgba(12,9,0,.9); backdrop-filter:blur(12px); z-index:50;
+    }
+    .header-inner { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:14px; }
+    .logo-area    { display:flex; align-items:center; gap:14px; }
+    .logo-icon {
+      width:44px; height:44px; background:linear-gradient(135deg,var(--accent),var(--accent-3));
+      border-radius:var(--radius-sm); display:flex; align-items:center; justify-content:center; font-size:21px;
+      box-shadow:0 0 28px rgba(245,158,11,.4); animation:pulse 3.5s ease-in-out infinite;
+    }
+    @keyframes pulse { 50% { box-shadow:0 0 44px rgba(245,158,11,.6); } }
+    .logo-text h1 {
+      font-size:1.45rem; font-weight:700; letter-spacing:-.02em;
+      background:linear-gradient(135deg,var(--text),var(--accent-2));
+      -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+    }
+    .logo-text span { font-size:.7rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:.08em; }
+    .env-badge {
+      padding:5px 12px; background:rgba(245,158,11,.12); border:1px solid rgba(245,158,11,.35);
+      border-radius:20px; font-size:.72rem; font-weight:600; color:var(--accent); letter-spacing:.04em;
+    }
+    .header-stats { display:flex; gap:10px; }
+    .stat-box { text-align:center; padding:7px 16px; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-sm); }
+    .stat-box .num { font-family:'JetBrains Mono',monospace; font-size:1.2rem; font-weight:700; color:var(--accent); }
+    .stat-box .lbl { font-size:.62rem; color:var(--text-dim); text-transform:uppercase; letter-spacing:.08em; }
+
+    /* ── Hero ── */
+    .hero { text-align:center; padding:68px 0 48px; }
+    .hero h2 { font-size:clamp(1.9rem,5vw,3.3rem); font-weight:800; line-height:1.12; letter-spacing:-.03em; margin-bottom:16px; }
+    .hero h2 .hl { background:linear-gradient(135deg,var(--accent),var(--accent-3)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+    .hero p { color:var(--text-muted); font-size:1rem; max-width:560px; margin:0 auto 24px; line-height:1.65; }
+    .hero-note {
+      display:inline-flex; align-items:center; gap:8px; padding:8px 18px;
+      background:rgba(245,158,11,.08); border:1px solid rgba(245,158,11,.25); border-radius:20px;
+      font-size:.82rem; color:var(--accent-2);
+    }
+
+    /* ── Build Levels ── */
+    .levels-section { padding:40px 0; border-top:1px solid var(--border); border-bottom:1px solid var(--border); margin-bottom:36px; }
+    .section-label { font-size:.76rem; font-weight:600; color:var(--text-dim); text-transform:uppercase; letter-spacing:.1em; margin-bottom:20px; display:flex; align-items:center; gap:10px; }
+    .section-label::after { content:''; flex:1; height:1px; background:var(--border); }
+    .levels-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:14px; }
+    .level-step {
+      padding:18px 20px; background:var(--surface); border:1px solid var(--border);
+      border-radius:var(--radius); transition:border-color .25s; position:relative; overflow:hidden;
+    }
+    .level-step::before {
+      content:''; position:absolute; top:0; left:0; width:3px; height:100%;
+      background:linear-gradient(180deg, var(--accent), var(--accent-3));
+    }
+    .level-step:hover { border-color:var(--accent); }
+    .level-num {
+      font-family:'JetBrains Mono',monospace; font-size:1.8rem; font-weight:700;
+      color:var(--accent); opacity:.4; margin-bottom:6px;
+    }
+    .level-step h4 { font-size:.88rem; font-weight:700; margin-bottom:5px; color:var(--text); }
+    .level-step p  { font-size:.76rem; color:var(--text-muted); line-height:1.5; margin-bottom:10px; }
+    .level-cmd {
+      font-family:'JetBrains Mono',monospace; font-size:.68rem; color:var(--accent-2);
+      background:rgba(245,158,11,.07); padding:4px 8px; border-radius:4px; display:block; margin-top:6px;
+    }
+
+    /* ── Dev Commands Strip ── */
+    .cmd-strip { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:16px 20px; margin-bottom:32px; }
+    .cmd-strip-inner { display:flex; gap:12px; flex-wrap:wrap; align-items:center; }
+    .cmd-strip-label { font-size:.72rem; color:var(--text-dim); text-transform:uppercase; letter-spacing:.08em; white-space:nowrap; }
+    .cmd-chip {
+      font-family:'JetBrains Mono',monospace; font-size:.74rem; color:var(--accent-2);
+      background:rgba(245,158,11,.07); border:1px solid rgba(245,158,11,.2);
+      padding:5px 12px; border-radius:6px; white-space:nowrap;
+    }
+    .cmd-chip span { color:var(--text-dim); margin-right:6px; }
+
+    /* ── Filter ── */
+    .filter-wrap {
+      position:sticky; top:81px; z-index:40;
+      background:rgba(12,9,0,.92); backdrop-filter:blur(10px);
+      padding:12px 0; border-bottom:1px solid var(--border); margin-bottom:32px;
+    }
+    .filter-inner { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+    .search-input {
+      flex:1; min-width:180px; max-width:280px; padding:8px 15px;
+      background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-sm);
+      color:var(--text); font-family:'Outfit',sans-serif; font-size:.86rem; outline:none; transition:border-color .2s;
+    }
+    .search-input:focus { border-color:var(--accent); }
+    .search-input::placeholder { color:var(--text-dim); }
+    .cat-btn {
+      padding:7px 13px; background:var(--surface); border:1px solid var(--border); border-radius:20px;
+      color:var(--text-muted); font-family:'Outfit',sans-serif; font-size:.78rem; cursor:pointer; transition:all .2s; white-space:nowrap;
+    }
+    .cat-btn:hover, .cat-btn.active { background:var(--accent); color:#0c0900; border-color:var(--accent); font-weight:600; }
+
+    /* ── Cards ── */
+    .cards-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(340px,1fr)); gap:18px; margin-bottom:56px; }
+    .fcard {
+      background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
+      overflow:hidden; transition:all .25s; animation:cardIn .4s ease backwards;
+    }
+    @keyframes cardIn { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:translateY(0); } }
+    .fcard:hover { border-color:var(--accent); box-shadow:0 0 32px rgba(245,158,11,.1); transform:translateY(-2px); }
+    .fcard-head { padding:16px 18px 10px; display:flex; justify-content:space-between; align-items:flex-start; }
+    .fcard-icon { width:38px; height:38px; border-radius:var(--radius-sm); display:flex; align-items:center; justify-content:center; font-size:19px; }
+    .fcard-badge { padding:3px 9px; font-size:.63rem; font-weight:600; border-radius:20px; text-transform:uppercase; letter-spacing:.06em; }
+    .b-core   { background:rgba(245,158,11,.12); color:var(--accent-2); }
+    .b-msg    { background:rgba(245,158,11,.12); color:var(--accent-2); }
+    .b-voice  { background:rgba(167,139,250,.12); color:var(--purple); }
+    .b-mem    { background:rgba(52,211,153,.12);  color:var(--green); }
+    .b-llm    { background:rgba(251,146,60,.12);  color:var(--accent-3); }
+    .b-tools  { background:rgba(103,232,249,.12);  color:var(--cyan); }
+    .b-proact { background:rgba(167,139,250,.12); color:var(--purple); }
+    .b-sec    { background:rgba(248,113,113,.12); color:var(--red); }
+    .b-arch   { background:rgba(52,211,153,.12);  color:var(--green); }
+    .b-cloud  { background:rgba(245,158,11,.12);  color:var(--accent-2); }
+    .b-ux     { background:rgba(251,146,60,.12);  color:var(--accent-3); }
+    .b-why    { background:rgba(248,113,113,.12); color:var(--red); }
+    .fcard-body { padding:0 18px 16px; }
+    .fcard-body h3 { font-size:1.08rem; font-weight:700; margin-bottom:4px; letter-spacing:-.01em; }
+    .fcard-body > p { color:var(--text-muted); font-size:.8rem; line-height:1.55; margin-bottom:12px; }
+    .features { display:flex; flex-direction:column; gap:4px; }
+    .feat {
+      display:flex; align-items:center; gap:9px; padding:7px 10px;
+      background:var(--surface-2); border:1px solid transparent; border-radius:var(--radius-sm);
+      cursor:pointer; transition:all .18s; user-select:none;
+    }
+    .feat:hover { background:var(--surface-3); border-color:var(--border); }
+    .feat.sel  { background:rgba(245,158,11,.1); border-color:var(--accent); }
+    .feat-check {
+      width:16px; height:16px; border-radius:3px; border:2px solid var(--border);
+      display:flex; align-items:center; justify-content:center;
+      flex-shrink:0; transition:all .18s; font-size:9px; color:transparent;
+    }
+    .feat.sel .feat-check { background:var(--accent); border-color:var(--accent); color:#0c0900; }
+    .feat-name { font-size:.79rem; font-weight:500; flex:1; }
+    .feat-sub  { font-size:.7rem; color:var(--text-dim); font-style:italic; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:180px; }
+    .feat-tag  { font-family:'JetBrains Mono',monospace; font-size:.6rem; color:var(--text-dim); background:var(--surface); padding:2px 6px; border-radius:3px; white-space:nowrap; }
+
+    /* ── Why Section ── */
+    .why-section { padding:40px 0; border-top:1px solid var(--border); margin-bottom:40px; }
+    .why-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:16px; margin-top:20px; }
+    .why-card {
+      padding:22px; background:var(--surface); border:1px solid var(--border);
+      border-radius:var(--radius); transition:border-color .25s;
+    }
+    .why-card:hover { border-color:rgba(245,158,11,.4); }
+    .why-card h4 { font-size:.95rem; font-weight:700; margin-bottom:8px; }
+    .why-card p  { color:var(--text-muted); font-size:.8rem; line-height:1.6; }
+    .code-inline { font-family:'JetBrains Mono',monospace; font-size:.72rem; color:var(--accent-2); background:rgba(245,158,11,.07); padding:1px 6px; border-radius:3px; }
+    .why-stat { font-family:'JetBrains Mono',monospace; font-size:.72rem; color:var(--red);   background:rgba(248,113,113,.08); padding:2px 7px; border-radius:4px; margin-top:8px; display:inline-block; }
+    .why-good { font-family:'JetBrains Mono',monospace; font-size:.72rem; color:var(--green); background:rgba(52,211,153,.08);   padding:2px 7px; border-radius:4px; margin-top:8px; display:inline-block; }
+
+    /* ── Basket ── */
+    .basket {
+      position:fixed; bottom:24px; left:50%; transform:translateX(-50%); z-index:100;
+      display:none; align-items:center; gap:10px;
+      background:rgba(25,18,0,.95); border:1px solid var(--border); border-radius:50px;
+      padding:10px 10px 10px 20px; box-shadow:0 8px 40px rgba(0,0,0,.6); backdrop-filter:blur(12px);
+    }
+    .basket.show { display:flex; }
+    .basket-info { font-size:.83rem; color:var(--text-muted); white-space:nowrap; }
+    .basket-info strong { color:var(--accent); font-family:'JetBrains Mono',monospace; }
+    .basket-clear { padding:7px 14px; background:transparent; border:1px solid var(--border); border-radius:20px; color:var(--text-muted); font-family:'Outfit',sans-serif; font-size:.76rem; cursor:pointer; transition:all .2s; }
+    .basket-clear:hover { border-color:var(--red); color:var(--red); }
+    .basket-gen {
+      display:flex; align-items:center; gap:7px; padding:10px 20px;
+      background:linear-gradient(135deg,var(--accent),var(--accent-3)); color:#0c0900;
+      border:none; border-radius:24px; font-family:'Outfit',sans-serif; font-size:.87rem; font-weight:700;
+      cursor:pointer; transition:all .25s; box-shadow:0 0 20px rgba(245,158,11,.35);
+    }
+    .basket-gen:hover { transform:translateY(-1px); box-shadow:0 0 32px rgba(245,158,11,.55); }
+
+    /* ── Modal ── */
+    .overlay { position:fixed; inset:0; background:rgba(0,0,0,.78); backdrop-filter:blur(8px); z-index:200; display:none; align-items:center; justify-content:center; padding:24px; }
+    .overlay.open { display:flex; }
+    .modal { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); width:100%; max-width:800px; max-height:86vh; display:flex; flex-direction:column; animation:modalIn .28s ease; }
+    @keyframes modalIn { from { opacity:0; transform:scale(.96) translateY(14px); } to { opacity:1; transform:scale(1) translateY(0); } }
+    .modal-head { padding:18px 22px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; }
+    .modal-head h3 { font-size:1rem; font-weight:700; display:flex; align-items:center; gap:8px; }
+    .modal-head h3 span { font-size:.7rem; color:var(--accent); background:rgba(245,158,11,.1); padding:2px 8px; border-radius:10px; }
+    .modal-close { width:28px; height:28px; border-radius:6px; border:1px solid var(--border); background:var(--surface-2); color:var(--text-muted); cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:14px; transition:all .2s; }
+    .modal-close:hover { border-color:var(--red); color:var(--red); }
+    .modal-body { padding:22px; overflow-y:auto; flex:1; }
+    .prompt-out { font-family:'JetBrains Mono',monospace; font-size:.78rem; line-height:1.8; color:var(--text); background:var(--bg); padding:18px; border-radius:var(--radius-sm); border:1px solid var(--border); white-space:pre-wrap; word-break:break-word; }
+    .modal-foot { padding:14px 22px; border-top:1px solid var(--border); display:flex; gap:10px; justify-content:flex-end; }
+    .modal-foot button { padding:9px 18px; border-radius:var(--radius-sm); font-family:'Outfit',sans-serif; font-size:.83rem; font-weight:600; cursor:pointer; transition:all .2s; }
+    .btn-copy   { background:var(--accent); color:#0c0900; border:none; }
+    .btn-copy:hover { background:var(--accent-2); }
+    .btn-cancel { background:transparent; color:var(--text-muted); border:1px solid var(--border); }
+    .btn-cancel:hover { border-color:var(--text-muted); }
+
+    /* ── Toast ── */
+    .toast { position:fixed; top:22px; right:22px; padding:11px 18px; background:var(--accent); color:#0c0900; border-radius:var(--radius-sm); font-size:.83rem; font-weight:700; z-index:300; transform:translateY(-12px); opacity:0; transition:all .25s; pointer-events:none; }
+    .toast.show { transform:translateY(0); opacity:1; }
+    .empty { grid-column:1/-1; text-align:center; padding:72px 0; color:var(--text-dim); font-size:1rem; }
+
+    /* ── Footer ── */
+    footer { padding:28px 0; border-top:1px solid var(--border); text-align:center; }
+    footer p { color:var(--text-dim); font-size:.76rem; line-height:1.8; }
+    footer a  { color:var(--accent-2); text-decoration:none; }
+    footer a:hover { text-decoration:underline; }
+
+    @media (max-width:640px) {
+      .cards-grid { grid-template-columns:1fr; }
+      .levels-grid { grid-template-columns:1fr 1fr; }
+      .basket { width:calc(100% - 32px); border-radius:var(--radius); flex-wrap:wrap; justify-content:center; }
+      .header-stats { gap:6px; }
+      .stat-box { padding:6px 10px; }
+    }
+  </style>
+</head>
+<body>
+<div class="grid-bg"></div>
+<div class="toast" id="toast">✅ CLAUDE.md copiado!</div>
+
+<!-- HEADER -->
+<header>
+  <div class="container header-inner">
+    <div class="logo-area">
+      <div class="logo-icon">🦞</div>
+      <div class="logo-text">
+        <h1>Gravity Claw</h1>
+        <span>Feature Store</span>
+      </div>
+      <span class="env-badge">× Claude Code</span>
+    </div>
+    <div class="header-stats">
+      <div class="stat-box"><div class="num" id="statTotal">0</div><div class="lbl">Features</div></div>
+      <div class="stat-box"><div class="num" id="statSel">0</div><div class="lbl">Selected</div></div>
+      <div class="stat-box"><div class="num">5</div><div class="lbl">Build Levels</div></div>
+    </div>
+  </div>
+</header>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="container">
+    <h2>Escolha as features.<br><span class="hl">Gere o CLAUDE.md.</span></h2>
+    <p>Selecione o que você quer implementar. Um <code style="font-family:'JetBrains Mono',monospace;font-size:.9em;color:var(--accent-2)">CLAUDE.md</code> estruturado será gerado — cole no seu projeto e deixe o Claude Code scaffoldar tudo.</p>
+    <div class="hero-note">🤖 Powered by Claude Sonnet 4.6 · TypeScript · Railway</div>
+  </div>
+</section>
+
+<!-- BUILD LEVELS -->
+<div class="container">
+  <section class="levels-section">
+    <div class="section-label">Build Levels — Implemente Nesta Ordem</div>
+    <div class="levels-grid">
+      <div class="level-step">
+        <div class="level-num">01</div>
+        <h4>Foundation</h4>
+        <p>Telegram + Claude + agent loop básico. Uma ferramenta: <code style="font-family:monospace;font-size:.8em">get_current_time</code>.</p>
+        <code class="level-cmd">npm run dev  # tsx watch src/index.ts</code>
+      </div>
+      <div class="level-step">
+        <div class="level-num">02</div>
+        <h4>Memory</h4>
+        <p>SQLite + FTS5. Ferramentas de leitura e escrita de memória. Core memory via soul.md.</p>
+        <code class="level-cmd">better-sqlite3 + FTS5</code>
+      </div>
+      <div class="level-step">
+        <div class="level-num">03</div>
+        <h4>Voice</h4>
+        <p>Transcrição de notas de voz (Whisper via OpenAI SDK). TTS de respostas (ElevenLabs).</p>
+        <code class="level-cmd">openai sdk · elevenlabs api</code>
+      </div>
+      <div class="level-step">
+        <div class="level-num">04</div>
+        <h4>Tools & MCP</h4>
+        <p>MCP bridge para shell, arquivos, Gmail, Notion, GitHub, Supabase. Definições em mcp.json.</p>
+        <code class="level-cmd">mcp.json · npx tsc --noEmit</code>
+      </div>
+      <div class="level-step">
+        <div class="level-num">05</div>
+        <h4>Heartbeat</h4>
+        <p>node-cron para briefings matinais, check-ins proativos e accountability partner.</p>
+        <code class="level-cmd">node-cron · railway up --detach</code>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- DEV COMMANDS STRIP -->
+<div class="container">
+  <div class="cmd-strip">
+    <div class="cmd-strip-inner">
+      <span class="cmd-strip-label">Dev workflow:</span>
+      <span class="cmd-chip"><span>#1</span>railway down</span>
+      <span class="cmd-chip"><span>#2</span>npm run dev</span>
+      <span class="cmd-chip"><span>#3</span>npx tsc --noEmit</span>
+      <span class="cmd-chip"><span>#4</span>railway up --detach</span>
+      <span class="cmd-chip"><span>#5</span>railway logs --lines 40</span>
+    </div>
+  </div>
+</div>
+
+<!-- FILTER -->
+<div class="filter-wrap">
+  <div class="container filter-inner">
+    <input class="search-input" id="searchInput" type="text" placeholder="🔍 Buscar features…" />
+    <button class="cat-btn active" data-cat="all">All</button>
+    <button class="cat-btn" data-cat="core">🧠 Core</button>
+    <button class="cat-btn" data-cat="messaging">💬 Channels</button>
+    <button class="cat-btn" data-cat="memory">🗄️ Memory</button>
+    <button class="cat-btn" data-cat="voice">🎙️ Voice</button>
+    <button class="cat-btn" data-cat="tools">🔌 Tools</button>
+    <button class="cat-btn" data-cat="security">🛡️ Security</button>
+    <button class="cat-btn" data-cat="deployment">🚀 Deploy</button>
+    <button class="cat-btn" data-cat="architecture">🏗️ Architecture</button>
+    <button class="cat-btn" data-cat="ux">🎨 UX</button>
+    <button class="cat-btn" data-cat="why">🦀 Why</button>
+  </div>
+</div>
+
+<!-- GRID -->
+<div class="container">
+  <div class="section-label" id="sectionLabel">All Features</div>
+  <div class="cards-grid" id="grid"></div>
+</div>
+
+<!-- WHY GRAVITY CLAW -->
+<div class="container">
+  <section class="why-section">
+    <div class="section-label">Por que Gravity Claw com Claude Code?</div>
+    <div class="why-grid">
+      <div class="why-card">
+        <h4>🧑‍💻 Você Escreve, Você Entende</h4>
+        <p>Claude Code scaffolda o código, mas você revisa cada arquivo antes de aprovar. Não há código que você não leu — você pode debugar, customizar e estender sem medo.</p>
+      </div>
+      <div class="why-card">
+        <h4>🔒 MCP, Não Skills Aleatórias</h4>
+        <p>OpenClaw usa community skill files — 341 encontrados maliciosos. Gravity Claw integra apenas via <span class="code-inline">mcp.json</span> — processos separados, auditáveis, sem código externo desconhecido.</p>
+        <div class="why-stat">341 skills maliciosas no OpenClaw</div>
+      </div>
+      <div class="why-card">
+        <h4>🌐 Zero Exposição na Internet</h4>
+        <p>42.665 instâncias do OpenClaw encontradas expostas (93,4% com auth bypass). Gravity Claw usa Telegram long-polling — nunca abre uma porta, nunca fica exposto.</p>
+        <div class="why-stat">42.665 instâncias expostas</div>
+      </div>
+      <div class="why-card">
+        <h4>💰 $200 Flat com Claude Max</h4>
+        <p>OpenClaw: $500–$5K/mês por token. Gravity Claw roda sobre Claude Max ($200 fixo). Cada heartbeat check não custa nada extra.</p>
+        <div class="why-good">Claude Max $200/mês fixo</div>
+      </div>
+      <div class="why-card">
+        <h4>📦 TypeScript Strict, Sem Surpresas</h4>
+        <p>Modo strict ligado. <span class="code-inline">npx tsc --noEmit</span> antes de cada deploy. O compilador é o seu net de segurança — bugs de tipo não chegam em produção.</p>
+        <div class="why-good">zero any implícito</div>
+      </div>
+      <div class="why-card">
+        <h4>🖥️ Seus Dados Ficam Locais</h4>
+        <p>Código, memória, API keys e conversas ficam na sua máquina. O Railway roda o bot, mas não armazena seus dados — SQLite reseta, Supabase/Pinecone são suas contas.</p>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- BASKET -->
+<div class="basket" id="basket">
+  <div class="basket-info"><strong id="basketCount">0</strong> features selecionadas</div>
+  <button class="basket-clear" id="clearBtn">Limpar</button>
+  <button class="basket-gen"   id="genBtn">📄 Gerar CLAUDE.md</button>
+</div>
+
+<!-- MODAL -->
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>📄 CLAUDE.md Gerado <span>Cole na raiz do projeto</span></h3>
+      <button class="modal-close" id="modalClose">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="prompt-out" id="promptOut"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-cancel" id="modalCancel">Fechar</button>
+      <button class="btn-copy"   id="copyBtn">📋 Copiar CLAUDE.md</button>
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="container">
+    <p>
+      Gravity Claw — Feature Store × Claude Code Edition<br>
+      Powered by <a href="https://claude.ai/code" target="_blank">Claude Code</a> ·
+      Deploy em <a href="https://railway.app" target="_blank">Railway</a> ·
+      Ecossistema <a href="https://openclaw.ai" target="_blank">OpenClaw</a>
+    </p>
+  </div>
+</footer>
+
+<script>
+const CARDS = [
+  {
+    id:'core', icon:'🧠', name:'Core Agent Loop', badge:'Core', bc:'b-core', cat:'core',
+    desc:'O loop agêntico fundamental em TypeScript. Inicializa o bot grammy, o SDK Anthropic e o ciclo de tool-calling.',
+    level: 1,
+    features:[
+      { name:'Agentic Loop Architecture',      sub:'pensa → chama tool → verifica → itera', tag:'required',   impl:'src/agent.ts'     },
+      { name:'@anthropic-ai/sdk Integration',  sub:'Claude Sonnet 4.6 via SDK oficial',     tag:'LLM',        impl:'src/llm.ts'       },
+      { name:'grammy Telegram Bot',            sub:'long-polling, sem web server',           tag:'required',   impl:'src/bot.ts'       },
+      { name:'System Prompt (soul.md)',        sub:'personalidade carregada no startup',     tag:'config',     impl:'soul.md'          },
+      { name:'Tool Calling & Function Exec',   sub:'o agente chama ferramentas reais',       tag:'agent',      impl:'src/tools/'       },
+      { name:'Error Recovery & Retry Logic',   sub:'recupera falhas e tenta de novo',        tag:'resilience', impl:'src/agent.ts'     },
+      { name:'Max Iteration Safety Limit',     sub:'teto de segurança — loop não trava',     tag:'safety',     impl:'src/agent.ts'     },
+    ]
+  },
+  {
+    id:'messaging', icon:'💬', name:'Communication Channels', badge:'Comms', bc:'b-msg', cat:'messaging',
+    desc:'Interface com Telegram, WhatsApp, Discord e outros. Telegram é o canal primário (long-polling).',
+    level: 1,
+    features:[
+      { name:'Telegram Bot (grammy)',     sub:'canal principal — polling, grupos',    tag:'primary',  impl:'src/bot.ts'         },
+      { name:'WhatsApp (Baileys)',        sub:'textos, fotos, grupos',                tag:'channel',  impl:'src/channels/wa.ts' },
+      { name:'Discord Bot (discord.js)', sub:'threads e servidores',                 tag:'channel',  impl:'src/channels/dc.ts' },
+      { name:'Slack Integration (Bolt)', sub:'canais, DMs, threads',                 tag:'channel',  impl:'src/channels/sl.ts' },
+      { name:'Signal (signal-cli)',      sub:'mensagens super privadas',              tag:'channel',  impl:'src/channels/sg.ts' },
+      { name:'iMessage (BlueBubbles)',   sub:'blue bubbles via Mac',                  tag:'channel',  impl:'src/channels/im.ts' },
+      { name:'Microsoft Teams',         sub:'uso corporativo e empresarial',          tag:'channel',  impl:'src/channels/mt.ts' },
+      { name:'WebChat Interface',       sub:'janela de chat no browser',              tag:'web',      impl:'src/channels/web.ts'},
+      { name:'Gmail Integration',       sub:'notificações em tempo real',             tag:'email',    impl:'mcp.json'           },
+      { name:'Multi-Channel Router',    sub:'um cérebro, muitos apps',               tag:'router',   impl:'src/router.ts'      },
+    ]
+  },
+  {
+    id:'memory', icon:'🗄️', name:'Superhuman Memory', badge:'Memory', bc:'b-mem', cat:'memory',
+    desc:'Três camadas: Core Memory (soul.md), Conversation Buffer (SQLite+FTS5) e Semantic Long-Term (Supabase+pgvector).',
+    level: 2,
+    features:[
+      { name:'Core Memory (soul.md)',         sub:'personalidade injetada no system prompt', tag:'tier-1', impl:'soul.md'          },
+      { name:'SQLite Conversation Buffer',    sub:'histórico local com better-sqlite3',      tag:'tier-2', impl:'src/memory/db.ts' },
+      { name:'FTS5 Full-Text Search',         sub:'busca eficiente no histórico local',      tag:'tier-2', impl:'src/memory/db.ts' },
+      { name:'Supabase + pgvector',           sub:'busca semântica persistente, free tier',  tag:'tier-3', impl:'src/memory/vec.ts'},
+      { name:'Semantic Long-Term (Pinecone)', sub:'alternativa Pinecone à Supabase',         tag:'tier-3', impl:'src/memory/pin.ts'},
+      { name:'Auto Message Vectorization',   sub:'embeds automáticos de cada mensagem',     tag:'embed',  impl:'src/memory/vec.ts'},
+      { name:'Knowledge Graph Builder',      sub:'web de fatos conectados',                 tag:'graph',  impl:'src/memory/kg.ts' },
+      { name:'Context Pruning',             sub:'resume partes antigas para economizar tokens',tag:'token$',impl:'src/agent.ts'  },
+      { name:'Multimodal Memory',           sub:'lembra fotos, áudios e vídeos',            tag:'media',  impl:'src/memory/mm.ts' },
+      { name:'Self-Evolving Memory',        sub:'memória que melhora com o tempo',           tag:'active', impl:'src/memory/evo.ts'},
+      { name:'Initialization Sequence',     sub:'preload de contexto no startup',           tag:'config', impl:'src/index.ts'     },
+    ]
+  },
+  {
+    id:'voice', icon:'🎙️', name:'Voice & Audio', badge:'Voice', bc:'b-voice', cat:'voice',
+    desc:'Transcrição com Whisper (openai SDK) e síntese de fala com ElevenLabs. Notas de voz bidirecionais.',
+    level: 3,
+    features:[
+      { name:'Whisper Transcription (openai)', sub:'STT via openai SDK oficial',        tag:'STT',     impl:'src/voice/stt.ts'  },
+      { name:'ElevenLabs Text-to-Speech',      sub:'voz realista e humanizada',          tag:'TTS',     impl:'src/voice/tts.ts'  },
+      { name:'Telegram Voice Note Handler',    sub:'recebe OGG, transcreve, responde',   tag:'channel', impl:'src/voice/tg.ts'   },
+      { name:'Voice Wake & Push-to-Talk',      sub:'ativação por voz tipo Siri',         tag:'trigger', impl:'src/voice/wake.ts' },
+      { name:'Talk Mode (bidirecional)',       sub:'conversa completa por voz',          tag:'duplex',  impl:'src/voice/mode.ts' },
+      { name:'Multi-language Transcription',  sub:'multilíngue via Whisper',            tag:'i18n',    impl:'src/voice/stt.ts'  },
+    ]
+  },
+  {
+    id:'tools', icon:'🔌', name:'Tools & MCP Integration', badge:'Tools', bc:'b-tools', cat:'tools',
+    desc:'MCP servers para Gmail, Notion, GitHub, Supabase e outros. Configurados em mcp.json — processos auditáveis.',
+    level: 4,
+    features:[
+      { name:'MCP Bridge (mcp.json)',      sub:'servidor MCP em processo separado',  tag:'MCP',     impl:'mcp.json'           },
+      { name:'Gmail MCP',                 sub:'lê e responde emails',               tag:'email',   impl:'mcp.json'           },
+      { name:'Notion MCP Server',         sub:'cria e edita páginas Notion',         tag:'docs',    impl:'mcp.json'           },
+      { name:'GitHub MCP Integration',    sub:'PRs, issues, código',                tag:'code',    impl:'mcp.json'           },
+      { name:'Supabase Database MCP',     sub:'queries no seu banco',               tag:'db',      impl:'mcp.json'           },
+      { name:'Browser Control (CDP)',     sub:'abre páginas, clica, preenche',       tag:'browser', impl:'src/tools/browser.ts'},
+      { name:'Shell Commands',           sub:'executa com confirmação explícita',   tag:'shell',   impl:'src/tools/shell.ts' },
+      { name:'File Operations',          sub:'lê, cria e organiza arquivos',         tag:'fs',      impl:'src/tools/files.ts' },
+      { name:'Web Search',               sub:'Google em tempo real via API',        tag:'search',  impl:'src/tools/search.ts'},
+      { name:'Webhook Triggers',         sub:'reage a eventos de outros apps',      tag:'event',   impl:'src/tools/webhook.ts'},
+      { name:'Home Assistant IoT',       sub:'controla dispositivos smart home',    tag:'IoT',     impl:'mcp.json'           },
+      { name:'Custom Internal DB MCPs',  sub:'bancos proprietários locais',         tag:'custom',  impl:'mcp.json'           },
+    ]
+  },
+  {
+    id:'security', icon:'🛡️', name:'Security & Privacy', badge:'Security', bc:'b-sec', cat:'security',
+    desc:'Whitelist de Telegram IDs, sem portas abertas, secrets no .env. Não-negociável em nenhuma feature.',
+    level: 1,
+    features:[
+      { name:'Telegram ID Whitelist',    sub:'silenciosamente ignora IDs não-autorizados', tag:'auth',    impl:'src/bot.ts'       },
+      { name:'No Open Ports',           sub:'grammy long-polling — nenhuma porta exposta', tag:'network', impl:'src/bot.ts'       },
+      { name:'.env Secrets Only',       sub:'NUNCA em código, logs ou arquivos de memória',tag:'policy',  impl:'.env'             },
+      { name:'Docker Containerization', sub:'build isolado para Railway',                  tag:'sandbox', impl:'Dockerfile'       },
+      { name:'AES-256-GCM Encryption',  sub:'vault para API keys sensíveis',              tag:'crypto',  impl:'src/crypto.ts'    },
+      { name:'MCP Validation Checks',   sub:'auditoria dos servidores MCP em mcp.json',   tag:'audit',   impl:'mcp.json'         },
+      { name:'Command Allowlists',      sub:'controle explícito de quais shells pode rodar',tag:'policy', impl:'src/tools/shell.ts'},
+      { name:'Dangerous Cmd Confirm',   sub:'confirmação via Telegram antes de executar', tag:'safety',  impl:'src/tools/shell.ts'},
+    ]
+  },
+  {
+    id:'deployment', icon:'🚀', name:'Deployment & Heartbeat', badge:'Deploy', bc:'b-cloud', cat:'deployment',
+    desc:'Railway + Docker. node-cron para heartbeat. Ciclo: railway down → npm run dev → tsc → railway up.',
+    level: 5,
+    features:[
+      { name:'Railway Cloud Deploy',       sub:'docker build automático (~90s)',       tag:'hosting',  impl:'railway.toml'        },
+      { name:'Dockerfile Production',      sub:'multi-stage build optimizado',         tag:'docker',   impl:'Dockerfile'          },
+      { name:'tsx Watch (hot-reload)',     sub:'auto-restart em mudanças de código',   tag:'dev',      impl:'package.json scripts'},
+      { name:'node-cron Heartbeat',        sub:'briefings diários e check-ins',        tag:'cron',     impl:'src/heartbeat.ts'    },
+      { name:'Morning Briefing Prompts',   sub:'clima, agenda, tarefas, news',         tag:'daily',    impl:'src/heartbeat.ts'    },
+      { name:'Evening Recap',             sub:'resumo do dia automatizado',            tag:'daily',    impl:'src/heartbeat.ts'    },
+      { name:'Accountability Partner',    sub:'check-ins de hábitos e metas',          tag:'habit',    impl:'src/heartbeat.ts'    },
+      { name:'Health Check Monitoring',   sub:'alerta se o bot cair',                  tag:'ops',      impl:'src/health.ts'       },
+      { name:'railway variables Sync',    sub:'env vars sincronizadas no Railway',     tag:'config',   impl:'railway CLI'         },
+    ]
+  },
+  {
+    id:'architecture', icon:'🏗️', name:'Agent Architecture', badge:'Arch', bc:'b-arch', cat:'architecture',
+    desc:'De agente único a swarms. Componentes plugáveis em TypeScript, mesh workflows, multi-agent.',
+    level: 4,
+    features:[
+      { name:'Agentic Tool Loop',        sub:'pensa → age → verifica → itera',      tag:'core',    impl:'src/agent.ts'       },
+      { name:'Agent Swarms',            sub:'especialistas colaborando em paralelo', tag:'multi',   impl:'src/swarm.ts'        },
+      { name:'Agent-to-Agent Comms',    sub:'múltiplos agentes se coordenam',        tag:'mesh',    impl:'src/swarm.ts'        },
+      { name:'Mesh Workflows',          sub:'decompõe objetivos em sub-tarefas',     tag:'graph',   impl:'src/workflow.ts'     },
+      { name:'Plugin System',           sub:'módulos TypeScript intercambiáveis',    tag:'extend',  impl:'src/plugins/'        },
+      { name:'Smart Recommendations',   sub:'sugere proativamente com base na memória',tag:'proact',impl:'src/heartbeat.ts'   },
+    ]
+  },
+  {
+    id:'ux', icon:'🎨', name:'UX & Interaction', badge:'UX', bc:'b-ux', cat:'ux',
+    desc:'Typing indicators, slash commands, usage tracking. Detalhes que fazem o bot parecer um produto.',
+    level: 3,
+    features:[
+      { name:'Typing Indicators',  sub:'sendChatAction("typing") enquanto processa', tag:'polish',  impl:'src/bot.ts'      },
+      { name:'Slash Commands',    sub:'/status, /new, /forget atalhos',              tag:'UX',      impl:'src/commands.ts'  },
+      { name:'Live Canvas',       sub:'widgets interativos e gráficos via HTML',     tag:'rich',    impl:'src/canvas.ts'    },
+      { name:'Usage Tracking',    sub:'tokens/custo por conversa, por dia',          tag:'ops',     impl:'src/usage.ts'     },
+      { name:'Group Management',  sub:'memória e contexto isolados por grupo',       tag:'multi',   impl:'src/memory/db.ts' },
+    ]
+  },
+  {
+    id:'why', icon:'🦀', name:'Why Gravity Claw?', badge:'Why', bc:'b-why', cat:'why',
+    desc:'Cada decisão técnica é uma resposta deliberada a uma falha real do OpenClaw.',
+    level: 0,
+    features:[
+      { name:'Código 100% Compreendido',    sub:'você escreveu ou aprovou cada linha',      tag:'own'     },
+      { name:'MCP vs Skills Maliciosas',    sub:'341 skills maliciosas no OpenClaw',        tag:'safe'    },
+      { name:'Zero Exposição na Internet',  sub:'42.665 instâncias OpenClaw expostas',      tag:'secure'  },
+      { name:'$200 Flat vs Metered',        sub:'$500–$5K/mês → Claude Max $200 fixo',     tag:'cost'    },
+      { name:'TypeScript Strict Mode',      sub:'npx tsc --noEmit antes de cada deploy',   tag:'quality' },
+      { name:'Dados 100% Locais',          sub:'nunca saem do seu computador/conta',        tag:'privacy' },
+      { name:'Supabase + pgvector Free',   sub:'memória semântica no free tier da Supabase',tag:'memory'  },
+    ]
+  },
+];
+
+// ── STATE ──
+const selected = new Set();
+let activeCat = 'all', searchTerm = '';
+
+// ── RENDER ──
+function render() {
+  const grid = document.getElementById('grid');
+  grid.innerHTML = '';
+
+  const filtered = CARDS.filter(c => {
+    if (activeCat !== 'all' && c.cat !== activeCat) return false;
+    if (searchTerm) {
+      const s = searchTerm.toLowerCase();
+      return c.name.toLowerCase().includes(s) || c.desc.toLowerCase().includes(s) ||
+             c.features.some(f => f.name.toLowerCase().includes(s) || (f.sub||'').toLowerCase().includes(s));
+    }
+    return true;
+  });
+
+  if (!filtered.length) { grid.innerHTML = '<div class="empty">Nenhuma feature encontrada 🌴</div>'; return; }
+
+  filtered.forEach((card, idx) => {
+    const el = document.createElement('div');
+    el.className = 'fcard';
+    el.style.animationDelay = (idx * 0.05) + 's';
+    el.innerHTML = `
+      <div class="fcard-head">
+        <div class="fcard-icon">${card.icon}</div>
+        <span class="fcard-badge ${card.bc}">${card.badge}${card.level ? ` · L${card.level}` : ''}</span>
+      </div>
+      <div class="fcard-body">
+        <h3>${card.name}</h3>
+        <p>${card.desc}</p>
+        <div class="features">
+          ${card.features.map(f => {
+            const fid = card.id+':'+f.name;
+            return `<div class="feat ${selected.has(fid)?'sel':''}" data-fid="${fid}">
+              <div class="feat-check">✓</div>
+              <span class="feat-name">${f.name}</span>
+              ${f.sub?`<span class="feat-sub">${f.sub}</span>`:''}
+              <span class="feat-tag">${f.impl||f.tag}</span>
+            </div>`;
+          }).join('')}
+        </div>
+      </div>`;
+    el.querySelectorAll('.feat').forEach(f => {
+      f.addEventListener('click', () => {
+        const fid = f.dataset.fid;
+        selected.has(fid) ? (selected.delete(fid), f.classList.remove('sel'))
+                          : (selected.add(fid),    f.classList.add('sel'));
+        sync();
+      });
+    });
+    grid.appendChild(el);
+  });
+  sync();
+}
+
+function sync() {
+  const total = CARDS.reduce((s,c) => s+c.features.length, 0);
+  document.getElementById('statTotal').textContent   = total;
+  document.getElementById('statSel').textContent     = selected.size;
+  document.getElementById('basketCount').textContent = selected.size;
+  document.getElementById('basket').classList.toggle('show', selected.size > 0);
+}
+
+// ── FILTERS ──
+document.querySelectorAll('.cat-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    activeCat = btn.dataset.cat;
+    const labels = {
+      all:'All Features', core:'🧠 Core Agent Loop', messaging:'💬 Communication Channels',
+      memory:'🗄️ Superhuman Memory', voice:'🎙️ Voice & Audio', tools:'🔌 Tools & MCP',
+      security:'🛡️ Security & Privacy', deployment:'🚀 Deploy & Heartbeat',
+      architecture:'🏗️ Agent Architecture', ux:'🎨 UX & Interaction', why:'🦀 Why Gravity Claw'
+    };
+    document.getElementById('sectionLabel').textContent = labels[activeCat] || 'Features';
+    render();
+  });
+});
+
+document.getElementById('searchInput').addEventListener('input', e => { searchTerm = e.target.value; render(); });
+document.getElementById('clearBtn').addEventListener('click', () => { selected.clear(); render(); });
+
+// ── GENERATE CLAUDE.md ──
+document.getElementById('genBtn').addEventListener('click', () => {
+  const grouped = {};
+  selected.forEach(fid => {
+    const [cid, fname] = fid.split(':');
+    const card = CARDS.find(c => c.id === cid);
+    const feat = card.features.find(f => f.name === fname);
+    if (!grouped[card.name]) grouped[card.name] = { level: card.level, features: [] };
+    grouped[card.name].features.push(feat);
+  });
+
+  // Sort by build level
+  const sortedGroups = Object.entries(grouped).sort((a,b) => (a[1].level||99) - (b[1].level||99));
+
+  let p = `# CLAUDE.md\n\n`;
+  p += `This file provides guidance to Claude Code when working on this Gravity Claw implementation.\n\n`;
+  p += `## Stack\n\n`;
+  p += `| Package | Role |\n|---|---|\n`;
+  p += `| \`grammy\` | Telegram bot (long-polling) |\n`;
+  p += `| \`@anthropic-ai/sdk\` | Claude Sonnet 4.6 (LLM primário) |\n`;
+  p += `| \`better-sqlite3\` + FTS5 | Memória local / conversation buffer |\n`;
+  p += `| \`openai\` SDK | Whisper transcription (STT) |\n`;
+  p += `| ElevenLabs API | Text-to-speech |\n`;
+  p += `| \`tsx\` | Dev runner com hot-reload |\n`;
+  p += `| \`node-cron\` | Heartbeat / proactive check-ins |\n\n`;
+  p += `## Regras de Segurança (Non-Negotiable)\n\n`;
+  p += `- **Whitelist de Telegram ID** — ignorar silenciosamente qualquer outro usuário\n`;
+  p += `- **Sem web server / sem portas abertas** — Telegram long-polling apenas\n`;
+  p += `- **Secrets no \`.env\` APENAS** — nunca em código, logs ou arquivos de memória\n`;
+  p += `- **Limite de iterações** no agent loop — loop não pode travar indefinidamente\n`;
+  p += `- **Shell commands perigosos** exigem confirmação explícita do usuário via Telegram\n`;
+  p += `- **MCP para integrações** — nenhum skill file externo não-auditado\n\n`;
+  p += `## Dev Workflow\n\n`;
+  p += `\`\`\`bash\n`;
+  p += `railway down          # pausar Railway antes de testar localmente\n`;
+  p += `npm run dev           # tsx watch src/index.ts (hot-reload)\n`;
+  p += `npx tsc --noEmit     # type-check antes de deployar\n`;
+  p += `railway up --detach  # deploy (~60-90s)\n`;
+  p += `railway logs --lines 40\n`;
+  p += `\`\`\`\n\n`;
+  p += `## Features Selecionadas para Implementar\n\n`;
+  p += `Implemente na ordem dos Build Levels (L1 → L5).\n\n`;
+
+  for (const [cardName, group] of sortedGroups) {
+    const lvl = group.level ? ` (Level ${group.level})` : '';
+    p += `### ${cardName}${lvl}\n\n`;
+    group.features.forEach(f => {
+      const impl = f.impl ? ` → \`${f.impl}\`` : '';
+      p += `- **${f.name}**${f.sub ? ` — ${f.sub}` : ''}${impl}\n`;
+    });
+    p += `\n`;
+  }
+
+  p += `## Startup Logs Esperados (Healthy)\n\n`;
+  p += `\`\`\`\n`;
+  p += `✅ Soul loaded (soul.md)\n`;
+  p += `✅ Connected as @your_bot_name\n`;
+  p += `✅ Heartbeat scheduled\n`;
+  p += `\`\`\`\n\n`;
+  p += `## Troubleshooting\n\n`;
+  p += `| Problema | Ação |\n|---|---|\n`;
+  p += `| Build falhou | \`railway logs --lines 100\` — erros npm/TypeScript |\n`;
+  p += `| Bot crasha no startup | Verificar env vars: \`railway variables\` |\n`;
+  p += `| Mensagens indo para lugar errado | Duas instâncias — \`railway down\` antes de \`npm run dev\` |\n`;
+  p += `| Precisa rollback | Corrigir localmente, depois \`railway up --detach\` |`;
+
+  document.getElementById('promptOut').textContent = p;
+  document.getElementById('overlay').classList.add('open');
+});
+
+// ── MODAL ──
+['modalClose','modalCancel'].forEach(id => {
+  document.getElementById(id).addEventListener('click', () => document.getElementById('overlay').classList.remove('open'));
+});
+document.getElementById('overlay').addEventListener('click', e => {
+  if (e.target === e.currentTarget) document.getElementById('overlay').classList.remove('open');
+});
+document.getElementById('copyBtn').addEventListener('click', () => {
+  navigator.clipboard.writeText(document.getElementById('promptOut').textContent).then(() => {
+    const t = document.getElementById('toast'); t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2200);
+  });
+});
+
+render();
+</script>
+</body>
+</html>

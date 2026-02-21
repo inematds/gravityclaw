@@ -1,0 +1,172 @@
+# 🦞 Update Gravity Claw
+
+# Railway Standard Operating Procedures — Gravity Claw
+
+> A step-by-step guide for deploying and managing your Gravity Claw AI agent on Railway.
+> Works with any Gravity Claw instance — just plug in your own project details.
+
+---
+
+## Your Project Details
+
+Fill these in once, then reference them throughout:
+
+| Key | Your Value |
+|-----|------------|
+| **Project Name** | *(your Railway project name)* |
+| **Service Name** | *(your Railway service name)* |
+| **Environment** | `production` |
+| **Project Directory** | *(path to your Gravity Claw folder)* |
+| **Dashboard URL** | *(your Railway project URL)* |
+
+---
+
+## Prerequisites
+
+1. **Railway CLI installed**
+
+   ```bash
+   npm install -g @railway/cli
+   railway --version
+   ```
+
+2. **Logged in**
+
+   ```bash
+   railway login --browserless
+   ```
+
+3. **Project linked** — run this inside your Gravity Claw folder:
+
+   ```bash
+   railway link
+   ```
+
+   Select your project and service when prompted.
+
+4. **Environment variables set on Railway**
+   For each variable in your `.env`, push it to Railway:
+
+   ```bash
+   railway variables set TELEGRAM_BOT_TOKEN="your-token"
+   railway variables set OPENROUTER_API_KEY="your-key"
+   # ... repeat for all env vars
+   ```
+
+---
+
+## The Dev Cycle
+
+```
+1. Pause Railway  →  2. Test Locally  →  3. Deploy  →  4. Verify
+```
+
+### Phase 1: Pause Railway (Enter Dev Mode)
+
+Before testing locally, **always pause the Railway service first.** Two bot instances polling the same Telegram token will fight over messages — some go to Railway, some to your laptop, neither works properly.
+
+```bash
+railway down
+```
+
+### Phase 2: Test Locally
+
+Start the local dev server with hot-reload:
+
+```bash
+npm run dev
+```
+
+This runs `tsx watch src/index.ts` — auto-restarts on code changes. Interact with your bot on Telegram to test changes in real time.
+
+When done, stop the local server (`Ctrl+C`).
+
+### Phase 3: Deploy to Railway
+
+Once you're happy with the changes:
+
+**3a. Type-check** to catch errors before deploying:
+
+```bash
+npx tsc --noEmit
+```
+
+**3b. Set new env vars** (if you added any):
+
+```bash
+railway variables set NEW_VAR_NAME="value"
+```
+
+**3c. Deploy:**
+
+```bash
+railway up --detach
+```
+
+This triggers a Docker build on Railway. Takes ~60–90 seconds. The bot briefly goes offline during rebuild, then reconnects automatically.
+
+### Phase 4: Verify
+
+Wait ~60 seconds for the build to finish, then check logs:
+
+```bash
+railway logs --lines 40
+```
+
+**All of these should appear:**
+
+- `✅ Soul loaded (soul.md)`
+- `✅ Connected as @your_bot_name`
+- `✅ Heartbeat scheduled`
+- No crash traces or unhandled errors
+
+---
+
+## Quick Reference
+
+| Task | Command |
+|------|---------|
+| Pause the live bot | `railway down` |
+| Start local dev | `npm run dev` |
+| Type-check | `npx tsc --noEmit` |
+| Deploy to Railway | `railway up --detach` |
+| View live logs | `railway logs --lines 100` |
+| Set a new env var | `railway variables set KEY="value"` |
+| List all env vars | `railway variables` |
+| Open dashboard | `railway open` |
+
+---
+
+## Things to Know
+
+### SQLite resets on every deploy
+
+Railway's filesystem is **ephemeral**. Your SQLite database (`gravity-claw.db`) starts fresh on each deploy — short-term conversation memory resets. **Pinecone semantic memory is cloud-hosted and persists across all deploys.**
+
+### Files that get deployed (via Dockerfile)
+
+`src/`, `tsconfig.json`, `soul.md`, `mcp.json`, `package.json`, `package-lock.json`
+
+### Files that do NOT get deployed (via .dockerignore)
+
+`.env`, `node_modules/`, `gravity-claw.db`
+
+---
+
+## Troubleshooting
+
+| Problem | What to do |
+|---------|------------|
+| **Build failed** | Run `railway logs --lines 100` — look for npm or TypeScript errors |
+| **Bot crashes on startup** | Check for missing env vars: `railway variables` |
+| **Messages going to wrong place** | You're running two instances — `railway down` before `npm run dev` |
+| **Need to rollback** | Fix the issue locally, then `railway up --detach` again |
+
+---
+
+## AI Agent Skill (for Antigravity / Gemini users)
+
+If you're using an AI coding agent, drop the `SKILL.md` and `deploy.md` workflow files into your project's `.agent/` folder. The agent will then handle the full pause → test → deploy → verify cycle for you — you never have to touch Railway yourself. Just say "deploy" and it handles the rest.
+
+- **Skill location:** `.agent/skills/railway-deploy/SKILL.md`
+- **Workflow location:** `.agent/workflows/deploy.md`
