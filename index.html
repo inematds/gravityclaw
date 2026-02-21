@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gravity Claw — Hub de Recursos</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg:        #08100f;
+      --surface:   #0d1c1a;
+      --surface-2: #122422;
+      --surface-3: #182e2b;
+      --border:    #1f3d39;
+      --text:      #e0ede9;
+      --text-muted:#6ea89e;
+      --text-dim:  #345e58;
+      --teal:      #22d3a8;
+      --teal-2:    #5eead4;
+      --amber:     #f59e0b;
+      --amber-2:   #fcd34d;
+      --pink:      #f472b6;
+      --green:     #34d399;
+      --red:       #f87171;
+      --purple:    #a78bfa;
+      --radius:    16px;
+      --radius-sm: 10px;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family:'Outfit',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; overflow-x:hidden; }
+
+    /* ── Background ── */
+    body::before {
+      content:''; position:fixed; inset:0; pointer-events:none; z-index:0;
+      background:
+        radial-gradient(ellipse at 10% 20%, rgba(34,211,168,.08) 0%, transparent 50%),
+        radial-gradient(ellipse at 90% 80%, rgba(245,158,11,.06) 0%, transparent 50%),
+        radial-gradient(ellipse at 55% 50%, rgba(244,114,182,.04) 0%, transparent 55%);
+      animation: bgDrift 22s ease-in-out infinite alternate;
+    }
+    @keyframes bgDrift { to { transform:translate(-1.5%, -2%); } }
+
+    .grid-bg {
+      position:fixed; inset:0; pointer-events:none; z-index:0;
+      background-image:
+        linear-gradient(rgba(34,211,168,.018) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(34,211,168,.018) 1px, transparent 1px);
+      background-size:60px 60px;
+    }
+
+    .container { max-width:1160px; margin:0 auto; padding:0 28px; position:relative; z-index:1; }
+
+    /* ── Nav ── */
+    nav {
+      padding:20px 0; border-bottom:1px solid var(--border);
+      position:sticky; top:0; background:rgba(8,16,15,.9); backdrop-filter:blur(12px); z-index:50;
+    }
+    .nav-inner { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:14px; }
+    .logo { display:flex; align-items:center; gap:12px; text-decoration:none; }
+    .logo-icon {
+      width:40px; height:40px; background:linear-gradient(135deg,var(--teal),var(--pink));
+      border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:20px;
+      box-shadow:0 0 24px rgba(34,211,168,.3); animation:pulse 4s ease-in-out infinite;
+    }
+    @keyframes pulse { 50%{ box-shadow:0 0 40px rgba(34,211,168,.5); } }
+    .logo-text { display:flex; flex-direction:column; }
+    .logo-text strong { font-size:1.2rem; font-weight:700; background:linear-gradient(135deg,var(--text),var(--teal-2)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; letter-spacing:-.02em; }
+    .logo-text span   { font-size:.65rem; color:var(--text-dim); text-transform:uppercase; letter-spacing:.1em; }
+
+    .nav-links { display:flex; gap:8px; flex-wrap:wrap; }
+    .nav-link {
+      padding:7px 14px; border:1px solid var(--border); border-radius:20px;
+      color:var(--text-muted); font-size:.78rem; text-decoration:none; transition:all .2s; white-space:nowrap;
+    }
+    .nav-link:hover { border-color:var(--teal); color:var(--teal); }
+    .nav-link.primary { background:var(--teal); color:#08100f; border-color:var(--teal); font-weight:600; }
+    .nav-link.primary:hover { background:var(--teal-2); }
+
+    /* ── Hero ── */
+    .hero { padding:80px 0 60px; text-align:center; }
+    .hero-eyebrow {
+      display:inline-flex; align-items:center; gap:8px; padding:6px 16px; margin-bottom:24px;
+      background:rgba(34,211,168,.08); border:1px solid rgba(34,211,168,.2); border-radius:20px;
+      font-size:.78rem; color:var(--teal-2); letter-spacing:.04em;
+    }
+    .hero h1 { font-size:clamp(2.4rem,6vw,4rem); font-weight:800; line-height:1.1; letter-spacing:-.035em; margin-bottom:20px; }
+    .hero h1 .g1 { background:linear-gradient(135deg,var(--teal),var(--teal-2)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+    .hero h1 .g2 { background:linear-gradient(135deg,var(--amber),var(--pink)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+    .hero p { color:var(--text-muted); font-size:1.1rem; max-width:600px; margin:0 auto 36px; line-height:1.7; }
+
+    .hero-ctas { display:flex; gap:12px; justify-content:center; flex-wrap:wrap; }
+    .cta-primary {
+      display:inline-flex; align-items:center; gap:8px; padding:13px 28px;
+      background:linear-gradient(135deg,var(--teal),#14b8a6); color:#08100f;
+      border:none; border-radius:50px; font-family:'Outfit',sans-serif; font-size:.95rem; font-weight:700;
+      text-decoration:none; transition:all .25s; box-shadow:0 0 24px rgba(34,211,168,.3);
+    }
+    .cta-primary:hover { transform:translateY(-2px); box-shadow:0 0 36px rgba(34,211,168,.5); }
+    .cta-secondary {
+      display:inline-flex; align-items:center; gap:8px; padding:13px 28px;
+      background:transparent; border:1px solid var(--border); border-radius:50px;
+      color:var(--text-muted); font-family:'Outfit',sans-serif; font-size:.95rem; font-weight:500;
+      text-decoration:none; transition:all .25s;
+    }
+    .cta-secondary:hover { border-color:var(--teal); color:var(--teal); }
+
+    /* ── Section ── */
+    .section { padding:56px 0; border-top:1px solid var(--border); }
+    .section-head { margin-bottom:32px; }
+    .section-label { font-size:.72rem; font-weight:600; color:var(--text-dim); text-transform:uppercase; letter-spacing:.12em; margin-bottom:8px; }
+    .section-head h2 { font-size:1.7rem; font-weight:700; letter-spacing:-.02em; }
+    .section-head p  { color:var(--text-muted); font-size:.9rem; margin-top:6px; line-height:1.6; }
+
+    /* ── Resource Cards ── */
+    .res-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(320px,1fr)); gap:16px; }
+
+    .res-card {
+      display:flex; flex-direction:column;
+      background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
+      overflow:hidden; text-decoration:none; color:inherit;
+      transition:all .25s; animation:cardIn .5s ease backwards;
+    }
+    @keyframes cardIn { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
+    .res-card:hover { border-color:var(--teal); box-shadow:0 0 36px rgba(34,211,168,.1); transform:translateY(-3px); }
+    .res-card.amber:hover  { border-color:var(--amber); box-shadow:0 0 36px rgba(245,158,11,.1); }
+    .res-card.pink:hover   { border-color:var(--pink);  box-shadow:0 0 36px rgba(244,114,182,.1); }
+    .res-card.purple:hover { border-color:var(--purple);box-shadow:0 0 36px rgba(167,139,250,.1); }
+    .res-card.ext:hover    { border-color:var(--teal-2);box-shadow:0 0 36px rgba(94,234,212,.1); }
+
+    .res-card-top { padding:20px 22px 14px; display:flex; align-items:flex-start; justify-content:space-between; gap:12px; }
+    .res-icon {
+      width:44px; height:44px; border-radius:var(--radius-sm); display:flex; align-items:center; justify-content:center;
+      font-size:22px; flex-shrink:0;
+      background:rgba(34,211,168,.08);
+    }
+    .res-icon.amber  { background:rgba(245,158,11,.1); }
+    .res-icon.pink   { background:rgba(244,114,182,.08); }
+    .res-icon.purple { background:rgba(167,139,250,.08); }
+    .res-icon.ext    { background:rgba(94,234,212,.06); }
+
+    .res-badge { padding:3px 9px; font-size:.62rem; font-weight:600; border-radius:12px; text-transform:uppercase; letter-spacing:.06em; white-space:nowrap; }
+    .badge-teal   { background:rgba(34,211,168,.12);  color:var(--teal-2); }
+    .badge-amber  { background:rgba(245,158,11,.12);  color:var(--amber-2); }
+    .badge-pink   { background:rgba(244,114,182,.12); color:var(--pink); }
+    .badge-purple { background:rgba(167,139,250,.12); color:var(--purple); }
+    .badge-green  { background:rgba(52,211,153,.12);  color:var(--green); }
+    .badge-ext    { background:rgba(94,234,212,.08);  color:var(--teal-2); border:1px solid rgba(94,234,212,.2); }
+
+    .res-body { padding:0 22px 20px; flex:1; }
+    .res-body h3 { font-size:1.05rem; font-weight:700; margin-bottom:6px; letter-spacing:-.01em; }
+    .res-body p  { color:var(--text-muted); font-size:.82rem; line-height:1.6; margin-bottom:12px; }
+
+    .res-tags { display:flex; gap:6px; flex-wrap:wrap; }
+    .res-tag  { font-family:'JetBrains Mono',monospace; font-size:.62rem; color:var(--text-dim); background:var(--surface-2); padding:2px 8px; border-radius:4px; }
+
+    .res-footer { padding:12px 22px; border-top:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; }
+    .res-footer span { font-size:.76rem; color:var(--text-dim); }
+    .res-arrow { font-size:.85rem; color:var(--text-dim); transition:transform .2s, color .2s; }
+    .res-card:hover .res-arrow { transform:translateX(3px); color:var(--teal); }
+    .res-card.amber:hover  .res-arrow { color:var(--amber); }
+    .res-card.pink:hover   .res-arrow { color:var(--pink); }
+    .res-card.purple:hover .res-arrow { color:var(--purple); }
+
+    /* ── Architecture ── */
+    .arch-grid { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+    @media (max-width:720px) { .arch-grid { grid-template-columns:1fr; } }
+
+    .arch-block { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:24px; }
+    .arch-block h4 { font-size:.95rem; font-weight:700; margin-bottom:14px; display:flex; align-items:center; gap:8px; }
+    .arch-block ul { list-style:none; display:flex; flex-direction:column; gap:8px; }
+    .arch-block li { display:flex; align-items:flex-start; gap:10px; font-size:.83rem; color:var(--text-muted); line-height:1.5; }
+    .arch-block li::before { content:'—'; color:var(--teal); flex-shrink:0; font-family:'JetBrains Mono',monospace; font-size:.75rem; margin-top:1px; }
+    .arch-block code { font-family:'JetBrains Mono',monospace; font-size:.78rem; color:var(--amber-2); background:rgba(245,158,11,.07); padding:1px 5px; border-radius:3px; }
+
+    /* ── Memory Tiers ── */
+    .tiers { display:flex; flex-direction:column; gap:10px; }
+    .tier {
+      display:flex; align-items:center; gap:14px; padding:14px 18px;
+      background:var(--surface-2); border:1px solid var(--border); border-radius:var(--radius-sm);
+    }
+    .tier-num { font-family:'JetBrains Mono',monospace; font-size:1.1rem; font-weight:700; color:var(--teal); opacity:.5; width:24px; flex-shrink:0; }
+    .tier-body { flex:1; }
+    .tier-body strong { font-size:.88rem; font-weight:600; color:var(--text); display:block; margin-bottom:2px; }
+    .tier-body span   { font-size:.76rem; color:var(--text-muted); }
+    .tier-badge { font-family:'JetBrains Mono',monospace; font-size:.62rem; color:var(--teal-2); background:rgba(34,211,168,.08); padding:2px 8px; border-radius:4px; white-space:nowrap; }
+
+    /* ── Build Levels ── */
+    .levels-row { display:flex; gap:0; border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; }
+    @media (max-width:700px) { .levels-row { flex-direction:column; } }
+    .level-col { flex:1; padding:18px 16px; border-right:1px solid var(--border); position:relative; }
+    .level-col:last-child { border-right:none; }
+    .level-num2 { font-family:'JetBrains Mono',monospace; font-size:.65rem; color:var(--teal); letter-spacing:.1em; text-transform:uppercase; margin-bottom:6px; display:block; }
+    .level-col h5 { font-size:.88rem; font-weight:700; margin-bottom:4px; }
+    .level-col p  { font-size:.73rem; color:var(--text-muted); line-height:1.5; }
+    .level-dot {
+      position:absolute; top:16px; right:16px; width:8px; height:8px;
+      border-radius:50%; background:var(--border);
+    }
+    .level-col.done .level-dot { background:var(--teal); box-shadow:0 0 8px var(--teal); }
+
+    /* ── Comparison Table ── */
+    .compare-table { width:100%; border-collapse:collapse; font-size:.84rem; }
+    .compare-table th { padding:10px 16px; text-align:left; background:var(--surface-2); color:var(--text-muted); font-size:.72rem; text-transform:uppercase; letter-spacing:.08em; border-bottom:1px solid var(--border); }
+    .compare-table td { padding:11px 16px; border-bottom:1px solid var(--border); color:var(--text-muted); vertical-align:top; }
+    .compare-table td:first-child { color:var(--text); font-weight:500; }
+    .compare-table tr:last-child td { border-bottom:none; }
+    .compare-table tr:hover td { background:var(--surface-2); }
+    .bad  { color:var(--red)   !important; }
+    .good { color:var(--green) !important; font-weight:500; }
+
+    /* ── Dev Commands ── */
+    .cmd-block { background:var(--bg); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; }
+    .cmd-bar { padding:10px 16px; background:var(--surface); border-bottom:1px solid var(--border); display:flex; align-items:center; gap:6px; }
+    .dot { width:10px; height:10px; border-radius:50%; }
+    .d1 { background:#f87171; } .d2 { background:#fbbf24; } .d3 { background:#34d399; }
+    .cmd-content { padding:20px; font-family:'JetBrains Mono',monospace; font-size:.78rem; line-height:2; }
+    .c-comment { color:var(--text-dim); }
+    .c-cmd     { color:var(--teal-2); }
+    .c-flag    { color:var(--amber-2); }
+
+    /* ── Stack ── */
+    .stack-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:12px; }
+    .stack-item { padding:14px 16px; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-sm); display:flex; align-items:center; gap:12px; }
+    .stack-pkg { font-family:'JetBrains Mono',monospace; font-size:.78rem; color:var(--amber-2); font-weight:600; }
+    .stack-role { font-size:.78rem; color:var(--text-muted); margin-top:2px; }
+
+    /* ── Footer ── */
+    footer { padding:36px 0; border-top:1px solid var(--border); }
+    .footer-inner { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:16px; }
+    .footer-logo { display:flex; align-items:center; gap:10px; }
+    .footer-logo span { font-size:1.1rem; }
+    .footer-logo p { font-size:.78rem; color:var(--text-dim); line-height:1.6; }
+    .footer-logo a { color:var(--teal-2); text-decoration:none; }
+    .footer-logo a:hover { text-decoration:underline; }
+    .footer-links { display:flex; gap:16px; flex-wrap:wrap; }
+    .footer-links a { font-size:.78rem; color:var(--text-dim); text-decoration:none; transition:color .2s; }
+    .footer-links a:hover { color:var(--teal); }
+
+    @media (max-width:640px) {
+      .res-grid { grid-template-columns:1fr; }
+      .hero { padding:56px 0 40px; }
+      .hero h1 { font-size:2.2rem; }
+    }
+  </style>
+</head>
+<body>
+<div class="grid-bg"></div>
+
+<!-- NAV -->
+<nav>
+  <div class="container nav-inner">
+    <a href="/" class="logo">
+      <div class="logo-icon">🦞</div>
+      <div class="logo-text">
+        <strong>Gravity Claw</strong>
+        <span>Resource Hub</span>
+      </div>
+    </a>
+    <div class="nav-links">
+      <a href="doc/gravity-claw-antigravity.html" class="nav-link">AntiGravity Store</a>
+      <a href="doc/gravity-claw-claudecode.html"  class="nav-link">Claude Code Store</a>
+      <a href="https://gravity-claw.vercel.app/"  class="nav-link primary" target="_blank">Live Store ↗</a>
+    </div>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="container">
+    <div class="hero-eyebrow">🦞 Agente de IA Pessoal · Open Source · TypeScript</div>
+    <h1>
+      <span class="g1">Gravity Claw</span><br>
+      <span class="g2">Hub de Recursos</span>
+    </h1>
+    <p>Um agente Telegram com loop agêntico, construído do zero — lean, seguro, totalmente compreendido. Cada linha revisada, cada secret protegido, sem portas abertas.</p>
+    <div class="hero-ctas">
+      <a href="doc/gravity-claw-claudecode.html" class="cta-primary">📄 Claude Code Store</a>
+      <a href="doc/gravity-claw-antigravity.html" class="cta-secondary">⚡ AntiGravity Store</a>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURE STORES -->
+<section class="section">
+  <div class="container">
+    <div class="section-head">
+      <div class="section-label">Feature Stores</div>
+      <h2>Escolha features. Gere o prompt certo.</h2>
+      <p>Cada store gera um output diferente — prompt para o AntiGravity ou CLAUDE.md para o Claude Code.</p>
+    </div>
+    <div class="res-grid">
+
+      <a href="doc/gravity-claw-claudecode.html" class="res-card amber" style="animation-delay:.05s">
+        <div class="res-card-top">
+          <div class="res-icon amber">📄</div>
+          <span class="res-badge badge-amber">Claude Code</span>
+        </div>
+        <div class="res-body">
+          <h3>Feature Store — Claude Code Edition</h3>
+          <p>Selecione as features desejadas e gere um <code style="font-family:monospace;font-size:.85em">CLAUDE.md</code> completo — com stack, build levels, segurança, comandos e localização dos arquivos (<code style="font-family:monospace;font-size:.85em">src/agent.ts</code>, <code style="font-family:monospace;font-size:.85em">mcp.json</code>…).</p>
+          <div class="res-tags">
+            <span class="res-tag">TypeScript</span>
+            <span class="res-tag">Build Levels</span>
+            <span class="res-tag">CLAUDE.md</span>
+            <span class="res-tag">Railway</span>
+            <span class="res-tag">11 categorias</span>
+          </div>
+        </div>
+        <div class="res-footer">
+          <span>doc/gravity-claw-claudecode.html</span>
+          <span class="res-arrow">→</span>
+        </div>
+      </a>
+
+      <a href="doc/gravity-claw-antigravity.html" class="res-card" style="animation-delay:.1s">
+        <div class="res-card-top">
+          <div class="res-icon">⚡</div>
+          <span class="res-badge badge-teal">AntiGravity</span>
+        </div>
+        <div class="res-body">
+          <h3>Feature Store — AntiGravity Edition</h3>
+          <p>Selecione as features e gere um prompt estruturado para colar no AntiGravity. Segue o CLAWS Framework (C→L→A→W→S), com Opus 4.5 planning mode e instruções brick-by-brick.</p>
+          <div class="res-tags">
+            <span class="res-tag">CLAWS Framework</span>
+            <span class="res-tag">Opus 4.5</span>
+            <span class="res-tag">OpenRouter</span>
+            <span class="res-tag">11 categorias</span>
+          </div>
+        </div>
+        <div class="res-footer">
+          <span>doc/gravity-claw-antigravity.html</span>
+          <span class="res-arrow">→</span>
+        </div>
+      </a>
+
+      <a href="https://gravity-claw.vercel.app/" class="res-card ext" target="_blank" style="animation-delay:.15s">
+        <div class="res-card-top">
+          <div class="res-icon ext">🌐</div>
+          <span class="res-badge badge-ext">Live ↗</span>
+        </div>
+        <div class="res-body">
+          <h3>Feature Store — Vercel (Live)</h3>
+          <p>Versão publicada e sempre atualizada. 94 features em 11 categorias, tema teal/mint, basket interativo com gerador de prompt genérico.</p>
+          <div class="res-tags">
+            <span class="res-tag">94 features</span>
+            <span class="res-tag">11 categorias</span>
+            <span class="res-tag">Vercel CDN</span>
+          </div>
+        </div>
+        <div class="res-footer">
+          <span>gravity-claw.vercel.app</span>
+          <span class="res-arrow">→</span>
+        </div>
+      </a>
+
+      <a href="doc/gravity-claw.html" class="res-card purple" style="animation-delay:.2s">
+        <div class="res-card-top">
+          <div class="res-icon purple">🛒</div>
+          <span class="res-badge badge-purple">Original</span>
+        </div>
+        <div class="res-body">
+          <h3>Feature Store — Versão Original</h3>
+          <p>A primeira versão da feature store. 7 categorias, tema roxo, CLAWS framework visual. Base de referência das outras versões.</p>
+          <div class="res-tags">
+            <span class="res-tag">45 features</span>
+            <span class="res-tag">7 categorias</span>
+            <span class="res-tag">Tema roxo</span>
+          </div>
+        </div>
+        <div class="res-footer">
+          <span>doc/gravity-claw.html</span>
+          <span class="res-arrow">→</span>
+        </div>
+      </a>
+
+    </div>
+  </div>
+</section>
+
+<!-- DOCUMENTOS -->
+<section class="section">
+  <div class="container">
+    <div class="section-head">
+      <div class="section-label">Documentação</div>
+      <h2>Guias e procedimentos</h2>
+      <p>Referências para construir, deployar e operar o Gravity Claw.</p>
+    </div>
+    <div class="res-grid">
+
+      <a href="CLAUDE.md" class="res-card amber" style="animation-delay:.05s">
+        <div class="res-card-top">
+          <div class="res-icon amber">🤖</div>
+          <span class="res-badge badge-amber">Claude Code</span>
+        </div>
+        <div class="res-body">
+          <h3>CLAUDE.md</h3>
+          <p>Instruções para o Claude Code ao trabalhar neste repositório. Inclui arquitetura, comandos de dev, troubleshooting, build levels e regras de segurança.</p>
+          <div class="res-tags"><span class="res-tag">project context</span><span class="res-tag">dev workflow</span><span class="res-tag">Railway</span></div>
+        </div>
+        <div class="res-footer"><span>CLAUDE.md</span><span class="res-arrow">→</span></div>
+      </a>
+
+      <a href="doc/gravity-claw-initialisation-prompt.md" class="res-card" style="animation-delay:.1s">
+        <div class="res-card-top">
+          <div class="res-icon">🚀</div>
+          <span class="res-badge badge-teal">Bootstrap</span>
+        </div>
+        <div class="res-body">
+          <h3>Prompt de Inicialização</h3>
+          <p>Cole este prompt no AntiGravity no início de um novo projeto. Define contexto, arquitetura, princípios de segurança e instrui o agente a começar pelo Level 1.</p>
+          <div class="res-tags"><span class="res-tag">AntiGravity</span><span class="res-tag">bootstrap</span><span class="res-tag">CLAWS</span></div>
+        </div>
+        <div class="res-footer"><span>doc/gravity-claw-initialisation-prompt.md</span><span class="res-arrow">→</span></div>
+      </a>
+
+      <a href="doc/update-gravity-claw-railway-sop.md" class="res-card pink" style="animation-delay:.15s">
+        <div class="res-card-top">
+          <div class="res-icon pink">🏗️</div>
+          <span class="res-badge badge-pink">SOP</span>
+        </div>
+        <div class="res-body">
+          <h3>Railway Deploy SOP</h3>
+          <p>Procedimento completo de deploy e gestão no Railway: pausar serviço, testar localmente, type-check, deploy, verificar logs. Com tabela de troubleshooting.</p>
+          <div class="res-tags"><span class="res-tag">Railway CLI</span><span class="res-tag">Docker</span><span class="res-tag">troubleshooting</span></div>
+        </div>
+        <div class="res-footer"><span>doc/update-gravity-claw-railway-sop.md</span><span class="res-arrow">→</span></div>
+      </a>
+
+      <a href="https://inematds.github.io/intelecto/doc/framework-comparison-pt.html" class="res-card ext" target="_blank" style="animation-delay:.2s">
+        <div class="res-card-top">
+          <div class="res-icon ext">🔬</div>
+          <span class="res-badge badge-ext">Referência ↗</span>
+        </div>
+        <div class="res-body">
+          <h3>Framework Comparison</h3>
+          <p>Comparação dos 9 frameworks do ecossistema OpenClaw: OpenClaw, ZeroClaw, NanoClaw, NanoBot, PicoClaw, IronClaw, TinyClaw, Agent Zero, Awesome OpenClaw.</p>
+          <div class="res-tags"><span class="res-tag">9 frameworks</span><span class="res-tag">130+ skills</span><span class="res-tag">benchmarks</span></div>
+        </div>
+        <div class="res-footer"><span>inematds.github.io/intelecto</span><span class="res-arrow">→</span></div>
+      </a>
+
+    </div>
+  </div>
+</section>
+
+<!-- ARQUITETURA -->
+<section class="section">
+  <div class="container">
+    <div class="section-head">
+      <div class="section-label">Arquitetura</div>
+      <h2>Como o Gravity Claw funciona</h2>
+    </div>
+    <div class="arch-grid">
+
+      <div class="arch-block">
+        <h4>🔒 Princípios Não-Negociáveis</h4>
+        <ul>
+          <li>Telegram long-polling — <strong>sem web server, sem portas abertas</strong></li>
+          <li>Whitelist de Telegram ID — ignora silenciosamente outros usuários</li>
+          <li>Secrets no <code>.env</code> apenas — nunca em código ou logs</li>
+          <li>MCP para integrações — nenhum skill file externo não-auditado</li>
+          <li>Limite de iterações no loop + confirmação para shell perigoso</li>
+        </ul>
+      </div>
+
+      <div class="arch-block">
+        <h4>📦 Tech Stack</h4>
+        <ul>
+          <li><code>grammy</code> — Telegram bot framework</li>
+          <li><code>@anthropic-ai/sdk</code> — Claude Sonnet 4.6 (LLM primário)</li>
+          <li><code>better-sqlite3</code> + FTS5 — conversation buffer local</li>
+          <li><code>openai</code> SDK — Whisper transcription (STT)</li>
+          <li>ElevenLabs API — Text-to-speech</li>
+          <li><code>tsx</code> — hot-reload em dev</li>
+          <li><code>node-cron</code> — heartbeat proativo</li>
+        </ul>
+      </div>
+
+      <div class="arch-block" style="grid-column:1/-1">
+        <h4>🧠 Memória em 3 Camadas</h4>
+        <div class="tiers">
+          <div class="tier">
+            <div class="tier-num">01</div>
+            <div class="tier-body">
+              <strong>Core Memory — System Prompt</strong>
+              <span>Personalidade e instruções base injetadas via <code style="font-family:monospace;font-size:.78em;color:#fcd34d">soul.md</code>. Sempre presente. Editável diretamente.</span>
+            </div>
+            <span class="tier-badge">soul.md</span>
+          </div>
+          <div class="tier">
+            <div class="tier-num">02</div>
+            <div class="tier-body">
+              <strong>Conversation Buffer — SQLite + FTS5</strong>
+              <span>Histórico da sessão com busca por texto. Ephemeral — reseta a cada Railway deploy.</span>
+            </div>
+            <span class="tier-badge">better-sqlite3</span>
+          </div>
+          <div class="tier">
+            <div class="tier-num">03</div>
+            <div class="tier-body">
+              <strong>Semantic Long-Term — Supabase + pgvector</strong>
+              <span>Memória vetorial persistente. Busca por significado, não só por palavra. Sobrevive a deploys.</span>
+            </div>
+            <span class="tier-badge">pgvector</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- BUILD LEVELS -->
+<section class="section">
+  <div class="container">
+    <div class="section-head">
+      <div class="section-label">Build Levels</div>
+      <h2>Implemente nesta ordem</h2>
+      <p>Cada level adiciona uma camada de funcionalidade. Teste cada brick antes de avançar.</p>
+    </div>
+    <div class="levels-row">
+      <div class="level-col done">
+        <div class="level-dot"></div>
+        <span class="level-num2">Level 01</span>
+        <h5>Foundation</h5>
+        <p>Telegram + Claude + agent loop. Uma tool: <code style="font-family:monospace;font-size:.8em;color:#fcd34d">get_current_time</code></p>
+      </div>
+      <div class="level-col">
+        <div class="level-dot"></div>
+        <span class="level-num2">Level 02</span>
+        <h5>Memory</h5>
+        <p>SQLite + FTS5, memory tools, soul.md</p>
+      </div>
+      <div class="level-col">
+        <div class="level-dot"></div>
+        <span class="level-num2">Level 03</span>
+        <h5>Voice</h5>
+        <p>Whisper STT + ElevenLabs TTS, notas de voz</p>
+      </div>
+      <div class="level-col">
+        <div class="level-dot"></div>
+        <span class="level-num2">Level 04</span>
+        <h5>Tools & MCP</h5>
+        <p>Shell, files, Gmail, Notion, GitHub via mcp.json</p>
+      </div>
+      <div class="level-col">
+        <div class="level-dot"></div>
+        <span class="level-num2">Level 05</span>
+        <h5>Heartbeat</h5>
+        <p>node-cron, briefings diários, accountability</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- DEV WORKFLOW -->
+<section class="section">
+  <div class="container">
+    <div class="section-head">
+      <div class="section-label">Dev Workflow</div>
+      <h2>Ciclo de desenvolvimento</h2>
+    </div>
+    <div class="cmd-block">
+      <div class="cmd-bar">
+        <span class="dot d1"></span><span class="dot d2"></span><span class="dot d3"></span>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:.72rem;color:var(--text-dim);margin-left:8px">bash — gravity-claw</span>
+      </div>
+      <div class="cmd-content">
+        <div><span class="c-comment"># 1. Pausar Railway antes de testar localmente</span></div>
+        <div><span class="c-cmd">railway down</span></div>
+        <div>&nbsp;</div>
+        <div><span class="c-comment"># 2. Dev com hot-reload (auto-restart em mudanças)</span></div>
+        <div><span class="c-cmd">npm run dev</span><span style="color:var(--text-dim)">  &nbsp;&nbsp;&nbsp;&nbsp;# tsx watch src/index.ts</span></div>
+        <div>&nbsp;</div>
+        <div><span class="c-comment"># 3. Type-check antes de deployar</span></div>
+        <div><span class="c-cmd">npx tsc <span class="c-flag">--noEmit</span></span></div>
+        <div>&nbsp;</div>
+        <div><span class="c-comment"># 4. Deploy no Railway (~60-90s)</span></div>
+        <div><span class="c-cmd">railway up <span class="c-flag">--detach</span></span></div>
+        <div>&nbsp;</div>
+        <div><span class="c-comment"># 5. Verificar logs — startup saudável deve mostrar:</span></div>
+        <div><span class="c-cmd">railway logs <span class="c-flag">--lines</span> 40</span></div>
+        <div><span style="color:var(--green)">  ✅ Soul loaded (soul.md)</span></div>
+        <div><span style="color:var(--green)">  ✅ Connected as @your_bot_name</span></div>
+        <div><span style="color:var(--green)">  ✅ Heartbeat scheduled</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- COMPARAÇÃO -->
+<section class="section">
+  <div class="container">
+    <div class="section-head">
+      <div class="section-label">Por que Gravity Claw</div>
+      <h2>OpenClaw vs Gravity Claw</h2>
+    </div>
+    <div style="overflow-x:auto;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;">
+      <table class="compare-table">
+        <thead>
+          <tr>
+            <th>Aspecto</th>
+            <th>OpenClaw</th>
+            <th>Gravity Claw</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Exposição na internet</td>
+            <td class="bad">42.665 instâncias expostas (93,4% sem auth)</td>
+            <td class="good">Zero — Telegram long-polling apenas</td>
+          </tr>
+          <tr>
+            <td>Skills de terceiros</td>
+            <td class="bad">341 skills maliciosas encontradas</td>
+            <td class="good">MCP apenas — processos auditáveis</td>
+          </tr>
+          <tr>
+            <td>Custo mensal</td>
+            <td class="bad">$500–$5.000/mês relatados</td>
+            <td class="good">$200 fixo (Claude Max) ou grátis (Ollama)</td>
+          </tr>
+          <tr>
+            <td>Código compreendido</td>
+            <td class="bad">100K+ linhas que ninguém leu</td>
+            <td class="good">Construído brick-by-brick, cada linha revisada</td>
+          </tr>
+          <tr>
+            <td>Dados do usuário</td>
+            <td class="bad">Cloud compartilhada desconhecida</td>
+            <td class="good">100% local — sua máquina, suas contas</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="container footer-inner">
+    <div class="footer-logo">
+      <span>🦞</span>
+      <p>
+        <strong style="color:var(--text)">Gravity Claw</strong> — Resource Hub<br>
+        Ecossistema <a href="https://openclaw.ai" target="_blank">OpenClaw</a> ·
+        Deploy em <a href="https://railway.app" target="_blank">Railway</a> ·
+        Powered by <a href="https://claude.ai/code" target="_blank">Claude Code</a>
+      </p>
+    </div>
+    <div class="footer-links">
+      <a href="doc/gravity-claw-claudecode.html">Claude Code Store</a>
+      <a href="doc/gravity-claw-antigravity.html">AntiGravity Store</a>
+      <a href="doc/gravity-claw-initialisation-prompt.md">Init Prompt</a>
+      <a href="doc/update-gravity-claw-railway-sop.md">Railway SOP</a>
+      <a href="CLAUDE.md">CLAUDE.md</a>
+      <a href="https://github.com/inematds/gravityclaw" target="_blank">GitHub ↗</a>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
